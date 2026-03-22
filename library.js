@@ -110,10 +110,15 @@ function getIdsArray(data, field) {
 	return ids.split(',').map(c => c.trim()).filter(Boolean);
 }
 
+const FILTER_CIDS = [1, 2, 64, 5, 10, 3, 49, 58, 9];
+
 async function getAllCategories() {
-	const cids = await categories.getAllCidsFromSet('categories:cid');
-	let allCats = await categories.getCategoriesData(cids);
-	allCats = allCats.filter(c => c && !c.disabled && !c.link);
+	let allCats = await categories.getCategoriesData(FILTER_CIDS);
+	allCats = allCats.filter(c => c && !c.disabled);
+	// Preserve the defined order
+	const orderMap = {};
+	FILTER_CIDS.forEach((cid, i) => { orderMap[cid] = i; });
+	allCats.sort((a, b) => orderMap[a.cid] - orderMap[b.cid]);
 	return allCats.map(c => ({
 		cid: c.cid,
 		name: c.name,
