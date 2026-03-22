@@ -7,6 +7,7 @@ const _ = require.main.require('lodash');
 const validator = require.main.require('validator');
 const db = require.main.require('./src/database');
 const topics = require.main.require('./src/topics');
+const categories = require.main.require('./src/categories');
 const settings = require.main.require('./src/settings');
 const groups = require.main.require('./src/groups');
 const user = require.main.require('./src/user');
@@ -29,6 +30,7 @@ plugin.init = async function (params) {
 
 	router.get('/plugins/nodebb-plugin-recent-cards/render', renderExternal);
 	router.get('/plugins/nodebb-plugin-recent-cards/render/style.css', renderExternalStyle);
+	router.get('/plugins/nodebb-plugin-recent-cards/filter', renderFiltered);
 	router.get('/admin/plugins/nodebb-plugin-recent-cards/tests/external', testRenderExternal);
 
 	plugin.settings = new settings('recentcards', '1.0.0', defaultSettings);
@@ -83,11 +85,22 @@ plugin.renderWidget = async function (widget) {
 	}
 	const topics = await getTopics(widget);
 
+	const allCats = await getAllCategories();
+
+	const widgetConfig = {
+		sort: widget.data.sort || 'recent',
+		teaserPost: widget.data.teaserPost || 'first',
+		teaserParseType: widget.data.teaserParseType || 'default',
+		thumbnailStyle: widget.data.thumbnailStyle || 'background',
+	};
+
 	widget.html = await app.renderAsync('partials/nodebb-plugin-recent-cards/header', {
 		topics: topics,
 		config: widget.templateData.config,
 		title: widget.data.title || '',
 		carouselMode: plugin.settings.get('enableCarousel'),
+		categories: JSON.stringify(allCats).replace(/</g, '\\u003c'),
+		widgetConfig: JSON.stringify(widgetConfig).replace(/</g, '\\u003c'),
 	});
 	return widget;
 };
@@ -95,6 +108,19 @@ plugin.renderWidget = async function (widget) {
 function getIdsArray(data, field) {
 	const ids = String(data[field] || '');
 	return ids.split(',').map(c => c.trim()).filter(Boolean);
+}
+
+async function getAllCategories() {
+	const cids = await categories.getAllCidsFromSet('categories:cid');
+	let allCats = await categories.getCategoriesData(cids);
+	allCats = allCats.filter(c => c && !c.disabled && !c.link);
+	return allCats.map(c => ({
+		cid: c.cid,
+		name: c.name,
+		icon: c.icon,
+		bgColor: c.bgColor,
+		color: c.color,
+	}));
 }
 
 function isVisibleInCategory(widget) {
@@ -224,7 +250,7 @@ async function getTopics(widget) {
 
 async function renderExternal(req, res, next) {
 	try {
-		const topics = await getTopics({
+		const topicsData = await getTopics({
 			uid: req.uid,
 			data: {
 				teaserPost: 'first',
@@ -232,12 +258,55 @@ async function renderExternal(req, res, next) {
 			templateData: {},
 		});
 
+		const allCats = await getAllCategories();
+
 		res.render('partials/nodebb-plugin-recent-cards/header', {
-			topics: topics,
+			topics: topicsData,
 			config: {
 				relative_path: nconf.get('url'),
 			},
+			categories: JSON.stringify(allCats).replace(/</g, '\\u003c'),
+			widgetConfig: '{}',
 		});
+	} catch (err) {
+		next(err);
+	}
+}
+
+async function renderFiltered(req, res, next) {
+	try {
+		const cids = String(req.query.cids || '');
+		const sort = String(req.query.sort || 'recent');
+		const teaserPost = String(req.query.teaserPost || 'first');
+		const teaserParseType = String(req.query.teaserParseType || 'default');
+		const thumbnailStyle = String(req.query.thumbnailStyle || 'background');
+
+		const allowedSorts = ['recent', 'create', 'votes', 'posts'];
+		const allowedTeasers = ['first', 'last-post'];
+		const allowedParseTypes = ['default', 'plaintext'];
+		const allowedThumbs = ['background', 'inline'];
+
+		const filteredTopics = await getTopics({
+			uid: req.uid,
+			data: {
+				topicsFromCid: cids,
+				sort: allowedSorts.includes(sort) ? sort : 'recent',
+				teaserPost: allowedTeasers.includes(teaserPost) ? teaserPost : 'first',
+				teaserParseType: allowedParseTypes.includes(teaserParseType) ? teaserParseType : 'default',
+				thumbnailStyle: allowedThumbs.includes(thumbnailStyle) ? thumbnailStyle : 'background',
+			},
+			templateData: {},
+		});
+
+		const html = await app.renderAsync('partials/nodebb-plugin-recent-cards/header', {
+			topics: filteredTopics,
+			config: { relative_path: nconf.get('relative_path') },
+			carouselMode: plugin.settings.get('enableCarousel'),
+			categories: '[]',
+			widgetConfig: '{}',
+		});
+
+		res.json({ html: html });
 	} catch (err) {
 		next(err);
 	}

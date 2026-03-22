@@ -1,8 +1,24 @@
 {{{ if topics.length }}}
 <div class="recent-cards-plugin preventSlideout">
-	{{{ if title }}}
-	<h5>{title}</h5>
-	{{{ end }}}
+	<script type="application/json" class="rc-categories-data">{categories}</script>
+	<script type="application/json" class="rc-widget-config">{widgetConfig}</script>
+
+	<div class="rc-filter-bar d-flex align-items-center justify-content-between mb-2">
+		<h5 class="mb-0 flex-grow-1">{{{ if title }}}{title}{{{ else }}}Son Paylaşımlar{{{ end }}}</h5>
+		<div class="rc-filter-wrapper position-relative flex-shrink-0">
+			<button class="rc-filter-btn btn btn-sm d-flex align-items-center gap-1"
+					type="button"
+					aria-haspopup="listbox"
+					aria-expanded="false">
+				<i class="fa fa-sliders fa-xs"></i>
+				<span class="rc-filter-label">Filtrele</span>
+				<i class="fa fa-caret-down fa-xs rc-caret"></i>
+			</button>
+			<div class="rc-filter-dropdown border rounded shadow-sm position-absolute d-none" role="listbox" aria-label="Category filter">
+				<div class="rc-filter-dropdown-inner"></div>
+			</div>
+		</div>
+	</div>
 
 	<div class="{{{ if !carouselMode }}}row{{{ else }}}d-flex gap-3{{{ end }}} recent-cards carousel-mode overflow-hidden invisible" itemscope itemtype="http://www.schema.org/ItemList" {{{ if carouselMode }}}style=""{{{ end }}}>
 		{{{ each topics }}}
@@ -47,6 +63,10 @@
 			</div>
 		</div>
 		{{{end}}}
+	</div>
+	<div class="rc-empty-state d-none text-center text-muted py-4">
+		<i class="fa fa-filter fa-2x mb-2 d-block"></i>
+		<span>Secilen filtrelere uygun konu bulunamadi.</span>
 	</div>
 </div>
 {{{end}}}

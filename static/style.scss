@@ -24,4 +24,116 @@
 			-webkit-backdrop-filter: blur(5px);
 		}
 	}
+
+	// Category filter
+	.rc-filter-bar {
+		min-height: 2.25rem;
+	}
+
+	.rc-filter-btn {
+		white-space: nowrap;
+		font-size: 0.85rem;
+		border-radius: var(--bs-border-radius-pill);
+		color: var(--bs-body-color);
+		background-color: var(--bs-tertiary-bg);
+		border: 1px solid var(--bs-border-color);
+		padding: 0.35rem 0.85rem;
+		transition: all 0.15s ease;
+		&:hover {
+			background-color: var(--bs-secondary-bg);
+			border-color: var(--bs-secondary-bg);
+		}
+		&.rc-filter-active {
+			background-color: var(--bs-secondary-bg);
+			border-color: var(--bs-secondary-bg);
+			font-weight: 600;
+		}
+		.rc-caret {
+			transition: transform 0.2s;
+			opacity: 0.6;
+		}
+		&[aria-expanded="true"] .rc-caret {
+			transform: rotate(180deg);
+		}
+	}
+
+	.rc-filter-dropdown {
+		top: 100%;
+		right: 0;
+		left: auto;
+		min-width: min(16rem, 90vw);
+		z-index: 1050;
+		background: var(--bs-body-bg);
+		border-color: var(--bs-border-color) !important;
+		margin-top: 0.25rem;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+
+		[data-dir="rtl"] & {
+			right: auto;
+			left: 0;
+		}
+
+		.rc-filter-dropdown-list {
+			max-height: 16.5rem; // ~6 items (6 x 2.75rem)
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+	}
+
+	.rc-filter-option {
+		cursor: pointer;
+		transition: background-color 0.15s;
+		margin: 0;
+		min-height: 2.75rem; // 44px at 16px root — Apple HIG touch target
+		&:hover, &:active {
+			background-color: var(--bs-tertiary-bg);
+		}
+		.form-check-input {
+			width: 1.125em;
+			height: 1.125em;
+			flex-shrink: 0;
+		}
+	}
+
+	// Mobile bottom-sheet backdrop
+	.rc-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 1049;
+		background: rgba(0, 0, 0, 0.3);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.rc-filter-header {
+		border-bottom: 1px solid var(--bs-border-color);
+	}
+
+	.rc-empty-state {
+		min-height: 7.5rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+
+	@media (max-width: 575.98px) {
+		.rc-filter-dropdown {
+			position: fixed !important;
+			left: 0 !important;
+			right: 0 !important;
+			bottom: 0 !important;
+			top: auto !important;
+			border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
+			margin-top: 0;
+			min-width: 100%;
+			padding-bottom: env(safe-area-inset-bottom, 0);
+
+			.rc-filter-dropdown-list {
+				max-height: 50vh;
+				max-height: 50dvh;
+			}
+		}
+	}
 }
